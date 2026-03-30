@@ -43,12 +43,19 @@ async function registerForPushNotifications(): Promise<string | null> {
     const tokenData = await Notifications.getExpoPushTokenAsync();
     const token = tokenData.data;
 
-    await fetch(`${API_URL}/push-token`, {
+    const resp = await fetch(`${API_URL}/push-token`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Basic YXJpYV9hZG1pbjpjaGFuZ2VtZQ==",
+      },
       body: JSON.stringify({ token }),
     });
-    console.log("Push token registered with backend");
+    if (resp.ok) {
+      console.log("Push token registered with backend");
+    } else {
+      console.log("Push token registration failed:", resp.status);
+    }
 
     if (Platform.OS === "android") {
       Notifications.setNotificationChannelAsync("default", {

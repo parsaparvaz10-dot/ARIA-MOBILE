@@ -38,7 +38,7 @@
       "expo-web-browser",
       "expo-notifications"
     ],
-    "platforms": ["web"],
+    "platforms": ["ios", "android", "web"],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
