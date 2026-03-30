@@ -39,6 +39,11 @@
       "expo-notifications"
     ],
     "platforms": ["ios", "android", "web"],
+    "extra": {
+      "eas": {
+        "projectId": "7c5e04b2-3253-464c-830a-1ef3921f0576"
+      }
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
