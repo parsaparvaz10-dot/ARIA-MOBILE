@@ -1,9 +1,7 @@
-Health check on the mobile app's backend connection.
-
-1. curl https://aria-auto-sales.fly.dev/health — expect 200
-2. curl -H "Authorization: Basic $(echo -n 'john.martinez:PorscheRO-2026!xK9m' | base64)" https://aria-auto-sales.fly.dev/api/leads — expect 200
-3. curl -H "Authorization: Basic $(echo -n 'john.martinez:PorscheRO-2026!xK9m' | base64)" https://aria-auto-sales.fly.dev/api/clients — expect 200
-4. curl -H "Authorization: Basic $(echo -n 'john.martinez:PorscheRO-2026!xK9m' | base64)" https://aria-auto-sales.fly.dev/api/calls — expect 200
-5. Check git status: `cd /Users/parsaparvaz/Downloads/app/artifacts/mobile && git status && git log --oneline -5`
-
-Report with checkmark/x for each endpoint and current git state.
+Check the current state of everything:
+1. Run: git status (any uncommitted changes?)
+2. Run: git log --oneline -5 (last 5 commits)
+3. Run: curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Basic am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt" https://aria-auto-sales.fly.dev/api/leads (backend responding?)
+4. Run: curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Basic am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt" https://aria-auto-sales.fly.dev/api/clients (clients endpoint?)
+5. Run: grep -rn "Authorization\|Basic\|getAuth\|getSession" lib/ hooks/ --include="*.ts" --include="*.tsx" (auth locations)
+6. Report: git state, backend health, auth locations found

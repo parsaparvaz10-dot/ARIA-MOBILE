@@ -1,4 +1,4 @@
-# CLAUDE.md — Aria Mobile App
+# Aria Mobile — CLAUDE.md
 
 > Claude Code reads this file automatically at session start.
 > This is the single source of technical truth for the ARIA-MOBILE codebase.
@@ -8,110 +8,121 @@
 
 ## What This Is
 
-Aria Mobile is the CRM companion app for Aria Auto Sales — an AI voice agent for car dealership salespeople. This app is how the salesperson (Christopher at Porsche River Oaks) sees leads, call transcripts, conversation summaries, and calls people back. It is NOT the voice agent — that lives in the backend repo (aria-auto-sales on Fly.io).
+Expo React Native CRM companion app for **Aria Auto Sales**. Pilot user: Christopher Mazloomi, salesperson at Porsche River Oaks, Houston.
 
-**The app's job:** Chris misses a call → Aria captures the lead → push notification buzzes Chris's phone → Chris opens the app → sees who called and what they want → taps Call to follow up.
+Christopher uses this app daily to see his leads, clients, call history, and appointments — all captured automatically by the Aria AI voice agent on the backend. He can call or text customers directly from the app.
 
-**Pilot user:** Christopher Mazloomi, Porsche River Oaks, Houston TX.
+**This is a live production app.** Christopher is actively using it. Every change you make affects a real user.
 
 ---
 
 ## Stack
 
-- **Framework:** Expo SDK 54, React Native 0.81.5
-- **Navigation:** expo-router (file-based routing)
-- **Language:** TypeScript
-- **Data fetching:** TanStack React Query
-- **Animations:** React Native Reanimated
-- **Push notifications:** expo-notifications
-- **Backend:** Fly.io (aria-auto-sales.fly.dev) — Python/FastAPI
-- **Database:** Supabase PostgreSQL (accessed through Fly.io API, not directly)
-- **Deploy:** Replit (git push → git pull in Replit shell → npx expo start --tunnel)
+| Component | Choice |
+|-----------|--------|
+| Framework | Expo SDK 54, React Native 0.81.5 |
+| Language | TypeScript |
+| Data fetching | TanStack Query (React Query) |
+| Animations | Reanimated |
+| Routing | expo-router (file-based) |
+| Push notifications | expo-notifications |
+| Backend | Fly.io (aria-auto-sales.fly.dev) — NOT in this repo |
+| Database | Supabase PostgreSQL — accessed via Fly.io API, NOT directly |
 
 ---
 
 ## Architecture
 
 ```
-Mobile App (this repo)
-  ├── app/              → Expo Router pages (file-based routing)
-  ├── components/       → Reusable UI components
-  ├── context/
-  │   └── AppContext.tsx → Global state, consumes lib/api.ts
-  ├── hooks/
-  │   └── useNotifications.ts → Push token registration + notification handlers
-  ├── lib/
-  │   ├── api.ts        → ALL API calls to Fly.io backend (apiFetch with Basic Auth)
-  │   └── supabase.ts   → Supabase client config
-  ├── assets/           → Images, icons, fonts
-  └── app.json          → Expo config (platforms, projectId, notification settings)
-
-Backend (separate repo: aria-auto-sales on Fly.io)
-  └── All data comes from here via REST API
+app/                    # expo-router file-based routing
+  (tabs)/               # Tab navigator screens
+    leads.tsx           # Leads list + detail
+    clients.tsx         # Clients list + detail
+    calls.tsx           # Call history
+    calendar.tsx        # Appointments
+    activity.tsx        # Activity feed
+components/             # Reusable UI components
+context/
+  AppContext.tsx         # Global app state
+hooks/
+  useNotifications.ts   # Push notification registration
+lib/
+  api.ts                # ALL backend API calls (HIGH PRIORITY FILE)
+assets/                 # Images, fonts
 ```
 
 ---
 
-## Key Files (Know These)
+## Key Files (Priority Order)
 
-| File | What It Does | Risk Level |
-|------|-------------|------------|
-| `lib/api.ts` | **THE** API layer. ALL data endpoints (leads, clients, calls, appointments, conversations) go through `apiFetch()`. Has the Basic Auth header. If tabs are empty, check here first. | HIGH |
-| `hooks/useNotifications.ts` | Push token registration + notification tap routing. Has its OWN separate auth header (not shared with api.ts). | HIGH |
-| `context/AppContext.tsx` | Global state provider. Consumes `api` from `lib/api.ts`. Defines Lead, Client, Appointment types. | MEDIUM |
-| `app.json` | Expo config. Platforms (ios, android, web), projectId for push tokens, notification icon/color. | MEDIUM |
-| `app/` directory | All screens/pages via expo-router. File = route. | MEDIUM |
-
----
-
-## Auth
-
-- **Type:** Basic Auth
-- **Credentials:** `john.martinez` / `PorscheRO-2026!xK9m`
-- **Where it's set:** Two separate places:
-  1. `lib/api.ts` → Authorization header in `apiFetch()` → used by ALL data endpoints
-  2. `hooks/useNotifications.ts` → Authorization header in push token POST → used ONLY for token registration
-- **CRITICAL:** These are INDEPENDENT. Fixing auth in one does NOT fix the other.
-- **How to find all auth:** `grep -r "Authorization\|AUTH_USER\|AUTH_PASS\|btoa\|Basic " --include="*.ts" --include="*.tsx" -l . | grep -v node_modules`
+| File | Priority | What It Does |
+|------|----------|-------------|
+| `lib/api.ts` | HIGH | Every backend API call. Auth header lives here. If data isn't loading, start here. |
+| `hooks/useNotifications.ts` | HIGH | Push token registration. Has its OWN auth header (separate from api.ts). |
+| `context/AppContext.tsx` | MEDIUM | Global state, salesperson ID, refresh triggers |
+| `app.json` | MEDIUM | Expo config, push notification setup, app identity |
+| `app/(tabs)/*.tsx` | MEDIUM | Individual screen files — UI and data display |
 
 ---
 
-## API Endpoints (Backend on Fly.io)
+## Auth — CRITICAL
 
-**Base URL:** `https://aria-auto-sales.fly.dev/api`
-**All endpoints require Basic Auth.**
+**Auth method:** Basic Auth (NOT Supabase Auth, NOT JWT, NOT OAuth)
 
-| Used In App | Endpoint | Purpose |
-|-------------|----------|---------|
-| Leads tab | GET /leads | All leads with conversation summaries |
-| Leads tab | PATCH /leads/{id}/status | Update lead stage |
-| Leads tab | PATCH /leads/{id}/notes | Update lead notes |
-| Leads tab | DELETE /leads/{id} | Delete lead |
-| Clients tab | GET /clients | All clients |
-| Clients tab | PATCH /clients/{id} | Update client |
-| Calendar tab | GET /appointments | All appointments |
-| Activity tab | GET /calls | All calls with transcripts |
-| Conversations | GET /conversations | SMS thread list |
-| Conversations | GET /conversations/{phone} | SMS thread by phone |
-| Call button | POST /call/proxy | Initiate call via Twilio |
-| Text button | POST /sms/send | Send SMS via Twilio |
-| Push setup | POST /push-token | Register Expo push token |
+**Credentials:**
+- Username: `john.martinez`
+- Password: `PorscheRO-2026!xK9m`
+- Pre-computed base64: `am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt`
+
+**Auth lives in TWO independent places:**
+1. `lib/api.ts` — for all CRM data calls
+2. `hooks/useNotifications.ts` — for push token registration
+
+**HARD RULES:**
+- NEVER use `getAuthHeader()` or `supabase.auth.getSession()` — these hang forever in React Native
+- NEVER use `btoa()` — it may not exist in React Native runtime
+- ALWAYS use the pre-computed base64 string directly: `'Authorization': 'Basic am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt'`
+- ALWAYS use `.then()/.catch()` chains, NOT async/await (more reliable in this environment)
+
+**Before ANY change, run:** `grep -rn "Authorization\|Basic\|auth\|getAuth\|getSession" lib/ hooks/ --include="*.ts" --include="*.tsx"` to confirm you know where every auth reference is.
 
 ---
 
-## 9-Step Pipeline (Enforced — Same as Backend)
+## API Endpoints (consumed from Fly.io backend)
+
+**Base URL:** `https://aria-auto-sales.fly.dev`
+
+| Method | Endpoint | Used By |
+|--------|----------|---------|
+| GET | /api/leads | Leads tab |
+| GET | /api/leads/{id} | Lead detail |
+| PUT | /api/leads/{id} | Edit lead |
+| PUT | /api/leads/{id}/status | Convert to client |
+| GET | /api/clients | Clients tab |
+| PUT | /api/clients/{id} | Edit client |
+| GET | /api/calls | Calls tab |
+| GET | /api/appointments | Calendar tab |
+| POST | /api/appointments | Create appointment |
+| POST | /api/call/proxy | Call button (Twilio) |
+| POST | /api/sms/send | Text button |
+| GET | /api/conversations | Messages tab |
+| POST | /api/push-token | Push token registration |
+
+---
+
+## 9-Step Pipeline
 
 Every task follows this sequence. No exceptions.
 
-1. **Understand** — read the relevant files
-2. **Test first** — write 7 test cases, show Parsa, HARD STOP until approved
-3. **Implement** — write the code
-4. **Self-audit** — failure modes, edge cases, data risk
-5. **Test** — run tests. Fail = go back to step 3
-6. **Pre-deploy** — note what changes, what shouldn't break
-7. **Deploy** — git add, commit, push. Then git pull in Replit.
-8. **Post-deploy verify** — open Expo Go on phone, verify the change works
-9. **Report** — update CLAUDE.md + tell Parsa what to update in Obsidian
+1. **Understand** — Read the relevant files in THIS repo
+2. **Test first** — Write 5-7 test cases, show Parsa, HARD STOP until approved
+3. **Implement** — Write the code
+4. **Self-audit** — List 3 most likely failure modes
+5. **Test** — Verify the change works
+6. **Pre-deploy** — git status, confirm what changed
+7. **Deploy** — git commit → git push (Parsa pulls in Replit)
+8. **Post-deploy verify** — Parsa confirms in Expo Go
+9. **Report** — Update CLAUDE.md + remind Parsa to update Obsidian
 
 **Step 2 is a hard gate.** No approval from Parsa, no code gets written.
 
@@ -120,40 +131,58 @@ Every task follows this sequence. No exceptions.
 ## Deploy Workflow
 
 ```
-1. Edit locally:  ~/Downloads/app/artifacts/mobile/
-2. Push:          cd /Users/parsaparvaz/Downloads/app/artifacts/mobile && git add . && git commit -m "description" && git push
-3. In Replit:     git pull origin main
-4. If new deps:   npm install --legacy-peer-deps
-5. Start:         npx expo start --tunnel
-6. Test:          Scan QR with Expo Go on physical iPhone
+1. Make changes locally (~/Downloads/app/artifacts/mobile/)
+2. git add -A && git commit -m "descriptive message"
+3. git push origin main
+4. Tell Parsa: "Push is ready. In Replit shell run: git pull && npx expo start --tunnel"
+5. Parsa opens Expo Go on iPhone, scans QR code
+6. Verify the change works on the physical device
 ```
 
-**Standard Expo Go will NOT work on Replit** — must use tunnel mode.
+**NEVER run `fly deploy` from this repo.** That's the backend repo. This repo deploys via git + Replit.
 
 ---
 
 ## Session Rules
 
-1. Do NOT refactor working code unless Parsa explicitly asks
-2. Do NOT add features beyond the stated task
-3. When fixing auth on ANY endpoint, grep ALL fetch calls in the codebase — auth is never isolated to one file
+1. Do NOT refactor working code unless explicitly asked
+2. Do NOT add features that aren't in the current task
+3. Before ANY change, grep all auth locations (command above)
 4. After writing code, self-audit: list the 3 most likely failure modes
-5. One feature per deploy, verify before moving to next
-6. Never touch `lib/api.ts` auth without also checking `hooks/useNotifications.ts` auth, and vice versa
-7. The mobile app deploys through Replit, NOT through Fly.io. Don't run `fly deploy` from this repo.
-8. Step 2 of the pipeline is a hard gate — write tests, show Parsa, STOP until approved.
-9. Use absolute paths when the working directory resets between commands.
+5. Keep deploys atomic — one feature per deploy, verify before the next
+6. Use ONLY React Native components (View, Text, TouchableOpacity, ScrollView, FlatList, StyleSheet). NEVER use HTML elements or CSS classes.
+7. NEVER use `getAuthHeader()`, `supabase.auth.getSession()`, or `btoa()`
+8. NEVER run `fly deploy` — that's the wrong repo
+9. Always use absolute file paths when editing (e.g., `lib/api.ts` not just `api.ts`)
+
+---
+
+## Key Constraints (every task, no exceptions)
+
+- Never touch `lib/api.ts` auth without also checking `hooks/useNotifications.ts` auth, and vice versa
+- Auth is never isolated to one file — when fixing auth on ANY endpoint, grep ALL fetch calls in the codebase
+- Step 2 is a hard gate — no code without Parsa's approval on tests
+- One feature per deploy (atomic)
+- The mobile app deploys through Replit, NOT Fly.io — never run `fly deploy` from this repo
+- No `btoa()` on physical devices — use pre-computed base64 string
+- No `getAuthHeader()` or `supabase.auth.getSession()` — they hang forever
+- Use `.then()/.catch()` chains, NOT async/await
+- Push tokens only work on physical devices, not simulators
+- Tunnel mode required on Replit (`npx expo start --tunnel`) — standard Expo Go won't work
+- Do NOT refactor working code unless Parsa explicitly asks
+- Do NOT add features beyond the stated task
+- Use absolute paths when the working directory resets between commands
 
 ---
 
 ## Expo / React Native Constraints
 
-- No `<form>` tags — use `onPress` / `onChange` handlers
-- No `localStorage` or `sessionStorage` — use React state or AsyncStorage
-- No `btoa()` on physical devices — hardcode Base64 strings or use a polyfill
-- Push tokens only work on physical devices, not simulators
-- Tunnel mode required on Replit (`npx expo start --tunnel`)
-- iOS push works in Expo Go. Android push requires development build (SDK 53+).
+- No `<form>` tags — use View + TextInput + TouchableOpacity
+- No `localStorage` — use AsyncStorage or React state
+- No `btoa()` — use pre-computed base64 string
+- Push notifications only work on physical devices, not simulators
+- Tunnel mode required: `npx expo start --tunnel`
+- Expo Go on iOS works for pilot. Android requires dev build (not needed now).
 
 ---
 
@@ -175,13 +204,14 @@ Every task follows this sequence. No exceptions.
 
 ## Repos & Infrastructure
 
-| Component | Location | Deploy |
-|-----------|----------|--------|
-| This app (mobile) | `~/Downloads/app/artifacts/mobile/` | git push → git pull in Replit → `npx expo start --tunnel` |
-| Backend (voice + API) | `~/Downloads/ZAR AGENTS/aria-auto-sales/` | `fly deploy` |
-| GitHub | github.com/parsaparvaz10-dot/ARIA-MOBILE | Private |
-| Replit | Connected via git | Auto-serves via Expo |
-| Expo account | @prsa.parvaz | Project: aria-mobile |
+| What | Where |
+|------|-------|
+| This repo (mobile) | `~/Downloads/app/artifacts/mobile/` (local) |
+| GitHub | github.com/parsaparvaz10-dot/ARIA-MOBILE |
+| Replit | Hosts Expo dev server |
+| Backend repo | `~/Downloads/ZAR AGENTS/aria-auto-sales/` (separate repo, separate CLAUDE.md) |
+| Backend API | https://aria-auto-sales.fly.dev |
+| Expo account | @prsa.parvaz |
 
 ---
 
@@ -190,7 +220,6 @@ Every task follows this sequence. No exceptions.
 | What | Value |
 |------|-------|
 | Backend URL | https://aria-auto-sales.fly.dev |
-| Pilot salesperson | Christopher at Porsche River Oaks |
 | Chris UUID | 00000000-0000-0000-0000-000000000001 |
 | Twilio number | +1 (346) 644-8190 |
 | Chris cell | +1 (713) 291-0059 |
@@ -200,18 +229,18 @@ Every task follows this sequence. No exceptions.
 
 ## Known Technical Debt
 
-1. Credentials hardcoded in `lib/api.ts` and `hooks/useNotifications.ts` — move to env/config before expanding beyond Chris
-2. No automated tests for the mobile app
-3. No CI/CD — manual git push/pull workflow
-4. Free tier Expo — may need upgrade for production push volume
-5. Android requires dev build for push — iOS only for pilot
+1. Hardcoded credentials — rotate before expanding beyond Christopher
+2. No automated tests — manual verification only
+3. No CI/CD — deploy is manual git push
+4. Free tier Expo — sufficient for pilot
+5. Android push requires dev build (iOS Expo Go works for pilot)
 
 ---
 
-## Lessons Learned (do not remove)
+## Lessons Learned
 
-- Auth is never isolated to one file. When fixing auth on any endpoint, grep the entire codebase for ALL fetch calls.
-- If ALL data endpoints return 401 but push-token returns 200, the problem is in `lib/api.ts`, not the backend.
-- When a bug "should be fixed" but isn't, check whether Claude Code actually edited the right file.
-- The backend CLAUDE.md exists at `~/Downloads/ZAR AGENTS/aria-auto-sales/CLAUDE.md` — don't duplicate backend info here.
-- `salesperson_knowledge.md` on the backend can contain banned phrases that leak into voice responses — if voice quality degrades, search the knowledge base too.
+1. **`getAuthHeader()` is the #1 app killer.** It calls `supabase.auth.getSession()` which hangs forever. This has caused three separate freezes. Always use inline Basic Auth with the pre-computed base64 string.
+2. **Auth lives in two places.** Fixing api.ts but not useNotifications.ts (or vice versa) breaks half the app. Always grep both.
+3. **Replit Agent breaks React Native.** If given open-ended prompts, it introduces HTML/CSS. Every Replit prompt must explicitly say "React Native only — View, Text, TouchableOpacity, StyleSheet."
+4. **Backend bugs look like mobile bugs.** When data doesn't show up, check the backend API with curl BEFORE touching the mobile code.
+5. **`btoa()` doesn't exist in React Native.** Use the pre-computed base64 string: `am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt`

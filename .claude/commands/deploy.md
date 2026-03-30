@@ -1,9 +1,8 @@
-Full deploy checklist for the mobile app. Execute each step in order.
-
-1. PRE-DEPLOY: Run `cd /Users/parsaparvaz/Downloads/app/artifacts/mobile && git log --oneline -3` to note current state
-2. COMMIT: `cd /Users/parsaparvaz/Downloads/app/artifacts/mobile && git add . && git status` — show me what's being committed
-3. Wait for my approval before pushing
-4. PUSH: `cd /Users/parsaparvaz/Downloads/app/artifacts/mobile && git push`
-5. VERIFY: Confirm push succeeded with `cd /Users/parsaparvaz/Downloads/app/artifacts/mobile && git log --oneline -1`
-6. REMIND: Tell Parsa to run `git pull origin main` in Replit shell, then `npx expo start --tunnel`
-7. Report: what changed, what to verify on the phone
+Prepare this change for deployment:
+1. Run: git status (show what changed)
+2. Run: git diff --stat (confirm scope)
+3. If more than 3 files changed, STOP and ask if this should be split into smaller deploys
+4. Run: git add -A && git commit -m "[descriptive message based on changes]"
+5. Run: git push origin main
+6. Tell Parsa: "Push is ready. In Replit shell run: git pull && npx expo start --tunnel"
+7. List what to verify in Expo Go on the phone
