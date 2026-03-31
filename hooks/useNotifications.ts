@@ -47,7 +47,7 @@ async function registerForPushNotifications(): Promise<string | null> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Basic YXJpYV9hZG1pbjpjaGFuZ2VtZQ==",
+        "Authorization": "Basic Y2hyaXMubWF6bG9vbWk6dlY0S1VFMjRQRnlRQV5hT3hedG5vREd1QnNBNA==",
       },
       body: JSON.stringify({ token }),
     });

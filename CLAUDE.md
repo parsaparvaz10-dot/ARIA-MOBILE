@@ -70,9 +70,9 @@ assets/                 # Images, fonts
 **Auth method:** Basic Auth (NOT Supabase Auth, NOT JWT, NOT OAuth)
 
 **Credentials:**
-- Username: `john.martinez`
-- Password: `PorscheRO-2026!xK9m`
-- Pre-computed base64: `am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt`
+- Username: `chris.mazloomi`
+- Password: (rotated 2026-03-31)
+- Pre-computed base64: `Y2hyaXMubWF6bG9vbWk6dlY0S1VFMjRQRnlRQV5hT3hedG5vREd1QnNBNA==`
 
 **Auth lives in TWO independent places:**
 1. `lib/api.ts` — for all CRM data calls
@@ -81,7 +81,7 @@ assets/                 # Images, fonts
 **HARD RULES:**
 - NEVER use `getAuthHeader()` or `supabase.auth.getSession()` — these hang forever in React Native
 - NEVER use `btoa()` — it may not exist in React Native runtime
-- ALWAYS use the pre-computed base64 string directly: `'Authorization': 'Basic am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt'`
+- ALWAYS use the pre-computed base64 string directly: `'Authorization': 'Basic Y2hyaXMubWF6bG9vbWk6dlY0S1VFMjRQRnlRQV5hT3hedG5vREd1QnNBNA=='`
 - ALWAYS use `.then()/.catch()` chains, NOT async/await (more reliable in this environment)
 
 **Before ANY change, run:** `grep -rn "Authorization\|Basic\|auth\|getAuth\|getSession" lib/ hooks/ --include="*.ts" --include="*.tsx"` to confirm you know where every auth reference is.
@@ -243,4 +243,4 @@ Every task follows this sequence. No exceptions.
 2. **Auth lives in two places.** Fixing api.ts but not useNotifications.ts (or vice versa) breaks half the app. Always grep both.
 3. **Replit Agent breaks React Native.** If given open-ended prompts, it introduces HTML/CSS. Every Replit prompt must explicitly say "React Native only — View, Text, TouchableOpacity, StyleSheet."
 4. **Backend bugs look like mobile bugs.** When data doesn't show up, check the backend API with curl BEFORE touching the mobile code.
-5. **`btoa()` doesn't exist in React Native.** Use the pre-computed base64 string: `am9obi5tYXJ0aW5lejpQb3JzY2hlUk8tMjAyNiF4Szlt`
+5. **`btoa()` doesn't exist in React Native.** Use the pre-computed base64 string: `Y2hyaXMubWF6bG9vbWk6dlY0S1VFMjRQRnlRQV5hT3hedG5vREd1QnNBNA==`

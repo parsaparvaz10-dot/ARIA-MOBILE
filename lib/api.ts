@@ -6,6 +6,7 @@ const API_URL = DEV_DOMAIN
 async function apiFetch(path: string, options: RequestInit = {}) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Authorization": "Basic Y2hyaXMubWF6bG9vbWk6dlY0S1VFMjRQRnlRQV5hT3hedG5vREd1QnNBNA==",
     ...(options.headers as Record<string, string> | undefined),
   };
 
